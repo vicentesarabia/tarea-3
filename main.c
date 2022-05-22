@@ -14,7 +14,7 @@ typedef struct
 
 typedef struct 
 {
-    char* titulo;
+    List* titulo;
     char* id;
     Palabras frecuencia[10];
     long cantidaPala;
@@ -64,50 +64,89 @@ char* quitar_caracteres(char* string, char* c){
 
 
 
-
 int is_equal_string(void * key1, void * key2) 
 {
     if(strcmp((char*)key1, (char*)key2)==0) return 1;
     return 0;
 }
 
-Map * procesarArchivo(Map* libros,char* token)
+Map * procesarArchivo(char* token)
 {
-Map * mapa = createMap(stringEqual);
+    libro * librosPro=(libro*)malloc(sizeof(libro));
+    librosPro->cantidaPala=0;
+    Map * mapa = createMap(stringEqual);
     FILE *f;
+    long auxtitle;
     f=fopen(token,"rt");
     char* word=next_word(f);
     for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
-    word = quitar_caracteres(word, "!?\";");
+    word = quitar_caracteres(word, ".,:_[]()!?\";");
     //Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
     while(word){
-    Palabras * search = searchMap(mapa, word);
-    if (search == NULL)
-    {
-        Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
-        
-        pal->cont = 1;
-        pal->word = strdup(word);
-        insertMap(mapa, word, pal);
-    }
-    else
-    {
-        
-        search->cont++;
-    }
-    word=next_word(f);
-    if (word){
-        for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
-        word = quitar_caracteres(word, ".,:_[]()!?\";");
-    }
-}
-Palabras * pos = firstMap(mapa);
-while (pos != NULL)
-{
-    printf("%s: %d\n", pos->word, pos->cont);
-    pos = nextMap(mapa);
-}
+        if(strcmp(word,"title")==0)
+        {
+            auxtitle=ftell(f);
 
+        }
+
+        Palabras * search = searchMap(mapa, word);
+        if (search == NULL)
+        {
+            Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
+        
+            pal->cont = 1;
+            pal->word = strdup(word);
+            insertMap(mapa, word, pal);
+        }
+        else
+        {
+        
+            search->cont++;
+        }
+        word=next_word(f);
+        if (word){
+            for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
+            word = quitar_caracteres(word, ".,:_[]()!?\";");
+        }
+    }
+
+    Palabras * pos = firstMap(mapa);
+    for(int i=0;i<10;i++)
+    {
+        librosPro->frecuencia[i].cont=0;
+    }
+    while (pos != NULL)
+    {
+        for(int i=0;i<10;i++){
+            
+            if(librosPro->frecuencia[i].cont<pos->cont){
+                librosPro->frecuencia[i].cont=pos->cont;
+                librosPro->frecuencia[i].word=strdup(pos->word);
+                break;
+            }
+        }
+        
+
+        //printf("%s: %d\n", pos->word, pos->cont);
+        librosPro->cantidaPala+=pos->cont;
+        pos = nextMap(mapa);
+    }
+    fseek(f,0,SEEK_END);
+    librosPro->caracteres=ftell(f);
+    printf("%ld\n",librosPro->caracteres);
+    printf("%ld\n",librosPro->cantidaPala);
+    fseek(f,auxtitle,SEEK_CUR);
+    fgets(word,1023,f);
+    printf("%ld\n",auxtitle);
+    for(int i=0;i<10;i++)
+    {
+        printf("%ld , %s\n",librosPro->frecuencia[i].cont, librosPro->frecuencia[i].word);
+
+    }
+    token=quitar_caracteres(token,".txt");
+    librosPro->id=token;
+    printf("%s\n",librosPro->id);
+    
 }
 
 void eleccionFunciones(int *funcion)
@@ -126,7 +165,7 @@ void eleccionFunciones(int *funcion)
 int main()
 {
     int funcion;
-    Map*libros=createMap(is_equal_string);
+    int a;
     char idtexto[100];
     eleccionFunciones(&funcion);
     while (funcion != 0)//ciclo repetitivo que permite seleccionar la funcion que quiere utilizar y con un 0 salir de estas 
@@ -135,18 +174,19 @@ int main()
         switch (funcion)
         {
             case 1:
-            printf("ingrese el/los id del texto a procesar: ");
+            a=1;
+            printf("ingrese el id del texto a procesar, ingrese 0 ara fnalizar la operacion: ");
             getchar();
             fgets(idtexto,100,stdin);
-            //idtexto[strspn(idtexto,"\n")]='\0';
             char* token=strtok(idtexto,"\n");
             char* aux=token;
    
-            while(token!=NULL)
+            while(token!=0)
             {  
-                procesarArchivo(libros,token);
+                procesarArchivo(token);
+                fgets(idtexto,100,stdin);
+                getchar();
                 token=strtok(idtexto,"\n");
-                if(aux==token)break;
             }
             break;
 
