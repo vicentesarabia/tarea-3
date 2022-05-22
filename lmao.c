@@ -61,11 +61,12 @@ int main()
     char* word=next_word(f);
     for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
     word = quitar_caracteres(word, "!?\";");
-    Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
+    //Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
     while(word){
     Palabras * search = searchMap(mapa, word);
     if (search == NULL)
     {
+        Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
         printf("no encontrado\n");
         pal->cont = 1;
         pal->word = strdup(word);

@@ -8,22 +8,59 @@
 
 typedef struct
 {
-    char* palabra;
-    long cantidad;
-
-}Mfrecuncia;
+    void * word;
+    int cont;
+}Palabras;
 
 typedef struct 
 {
     char* titulo;
     char* id;
-    Mfrecuncia frecuencia[10];
+    Palabras frecuencia[10];
     long cantidaPala;
     long caracteres;
     Map* palabras;
 
 }libro;
 
+
+int stringEqual(void * key1, void * key2) {
+    const char * A = key1;
+    const char * B = key2;
+    return strcmp(A, B) == 0;
+}
+
+char* next_word (FILE *f) {
+    char x[1024];
+    /* assumes no word exceeds length of 1023 */
+    if (fscanf(f, " %1023s", x) == 1)
+        return strdup(x);
+    else
+        return NULL;
+}
+
+int hayQueEliminar(char c, char* string_chars){
+    for(int i=0 ; i<strlen(string_chars) ; i++){
+        if(string_chars[i]==c) return 1;
+    }
+    return 0;
+}
+
+char* quitar_caracteres(char* string, char* c){
+    int i;
+    int j;
+    for(i=0 ; i < strlen(string) ; i++){
+        if(hayQueEliminar(string[i], c)){
+            for(j=i ; j<strlen(string)-1 ;j++){
+                string[j] = string[j+1];
+        }
+        string[j]='\0';
+        i--;
+    }
+}
+
+    return string;
+}
 
 
 
@@ -36,42 +73,40 @@ int is_equal_string(void * key1, void * key2)
 
 Map * procesarArchivo(Map* libros,char* token)
 {
-    printf("%s",token);
-    char*token2, *aux2;
-    char aux[101];
-    Mfrecuncia* kekw;
-    libro* libroPro=(libro*)malloc(sizeof(libro));
-    libroPro->palabras=createMap(is_equal_string);
-    FILE* entrada=fopen(token,"rt");
-    while(fgets(aux,200,entrada)){
-        token2=strtok(aux,"\"");
-        (*token2)=(tolower(*token2));
-        aux2=token2;
-        while(token2!=NULL)
-        {
-            kekw->palabra=strdup(token2);
-            kekw->cantidad=1;
-            
-            Mfrecuncia *auxbuscar=searchMap(libroPro->palabras,token2);
-            if(auxbuscar==NULL)
-            {
-                insertMap(libroPro->palabras,token2,kekw);
-            }
-            else{
-                auxbuscar->cantidad++;
-            }
-            token2=strtok(aux,"\"");
-            (*token2)=tolower(*token2);
-            if(aux2==token2)break;
-        }
-
+Map * mapa = createMap(stringEqual);
+    FILE *f;
+    f=fopen(token,"rt");
+    char* word=next_word(f);
+    for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
+    word = quitar_caracteres(word, "!?\";");
+    //Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
+    while(word){
+    Palabras * search = searchMap(mapa, word);
+    if (search == NULL)
+    {
+        Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
         
+        pal->cont = 1;
+        pal->word = strdup(word);
+        insertMap(mapa, word, pal);
     }
-    Mfrecuncia *auxbuscar=firstMap(libroPro->palabras);
-    printf("%s , %ld\n",auxbuscar->palabra,auxbuscar->cantidad);
-
-
-
+    else
+    {
+        
+        search->cont++;
+    }
+    word=next_word(f);
+    if (word){
+        for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
+        word = quitar_caracteres(word, ".,:_[]()!?\";");
+    }
+}
+Palabras * pos = firstMap(mapa);
+while (pos != NULL)
+{
+    printf("%s: %d\n", pos->word, pos->cont);
+    pos = nextMap(mapa);
+}
 
 }
 
@@ -103,12 +138,14 @@ int main()
             printf("ingrese el/los id del texto a procesar: ");
             getchar();
             fgets(idtexto,100,stdin);
-            char* token=strtok(idtexto,"\"");
+            //idtexto[strspn(idtexto,"\n")]='\0';
+            char* token=strtok(idtexto,"\n");
             char* aux=token;
+   
             while(token!=NULL)
             {  
                 procesarArchivo(libros,token);
-                token=strtok(idtexto,"\"");
+                token=strtok(idtexto,"\n");
                 if(aux==token)break;
             }
             break;
