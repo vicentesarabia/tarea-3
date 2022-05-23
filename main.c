@@ -9,7 +9,7 @@
 typedef struct
 {
     void * word;
-    int cont;
+    float cont;
 }Palabras;
 
 typedef struct 
@@ -70,7 +70,7 @@ int is_equal_string(void * key1, void * key2)
     return 0;
 }
 
-Map * procesarArchivo(char* token)
+libro * procesarArchivo(char* token)
 {
     libro * librosPro=(libro*)malloc(sizeof(libro));
     librosPro->cantidaPala=0;
@@ -117,20 +117,24 @@ Map * procesarArchivo(char* token)
     }
     while (pos != NULL)
     {
-        for(int i=0;i<10;i++){
-            
-            if(librosPro->frecuencia[i].cont<pos->cont){
-                librosPro->frecuencia[i].cont=pos->cont;
-                librosPro->frecuencia[i].word=strdup(pos->word);
-                break;
-            }
-        }
-        
-
         //printf("%s: %d\n", pos->word, pos->cont);
         librosPro->cantidaPala+=pos->cont;
         pos = nextMap(mapa);
     }
+    pos = firstMap(mapa);
+    while (pos != NULL){
+
+        for(int i=0;i<10;i++){
+           
+            if(librosPro->frecuencia[i].cont<pos->cont/librosPro->cantidaPala){
+                librosPro->frecuencia[i].cont=pos->cont/librosPro->cantidaPala;
+                librosPro->frecuencia[i].word=strdup(pos->word);
+                break;
+            }
+        }
+        pos = nextMap(mapa);
+    }
+    librosPro->palabras=mapa;
     fseek(f,0,SEEK_END);
     librosPro->caracteres=ftell(f);
     printf("%ld\n",librosPro->caracteres);
@@ -140,25 +144,42 @@ Map * procesarArchivo(char* token)
     printf("%ld\n",auxtitle);
     for(int i=0;i<10;i++)
     {
-        printf("%ld , %s\n",librosPro->frecuencia[i].cont, librosPro->frecuencia[i].word);
+        printf("%.4f , %s\n",librosPro->frecuencia[i].cont, librosPro->frecuencia[i].word);
 
     }
     token=quitar_caracteres(token,".txt");
-    librosPro->id=token;
+    librosPro->id=strdup(token);
     printf("%s\n",librosPro->id);
+    return librosPro;
     
 }
+void mostrarFrecuencia(TreeMap *mapa , char id[])
+{
 
+    Pair*aux=searchTreeMap(mapa,id);
+    libro *libroaux=aux->value;
+    if(libroaux==NULL)
+    {
+        printf("no esta el libro buscado\n");
+        return;
+    }
+    for(int i=0;i<10;i++)
+    {
+        printf("%.4f , %s\n",libroaux->frecuencia[i].cont, libroaux->frecuencia[i].word);
+
+    }
+
+}
 void eleccionFunciones(int *funcion)
 {
     printf("seleccione 0 para salir\n");
-    printf("Seleccione 1 para importar un archivo\n");//funcion esencial para la funcionalidad del codigo, listo
-    printf("Seleccione 2 para exportar a un archivo\n");
-    printf("Seleccione 3 si quiere agregar un producto a la lista\n");
-    printf("Seleccione 4 si quiere buscar un producto por su tipo\n");
-    printf("Seleccione 5 si quiere buscar por marca del/los productos\n");
-    printf("Seleccione 6 si quiere buscar un producto por su nombre\n");
-    printf("Seleccione 7 si quiere mostrar todos los productos\n");
+    printf("Seleccione 1 para importar un documento\n");//funcion esencial para la funcionalidad del codigo, listo
+    printf("Seleccione 2 para mostrar documentos ingresados\n");
+    printf("Seleccione 3 para buscar libro por su titulo\n");
+    printf("Seleccione 4 para mostrar frecuenca de un libro\n");
+    printf("Seleccione 5 para mostrar las palabras relevantes de un libro\n");
+    printf("Seleccione 6 para buscar que libros contienen la palabra a ingresar\n");
+    printf("Seleccione 7 para mostrar la palabra que se ingrese en su contexto\n");
     scanf("%i",funcion);//funcion que quiere ingresar
 }
 
@@ -166,7 +187,11 @@ int main()
 {
     int funcion;
     int a;
-    char idtexto[100];
+    
+    char idtexto[101];
+    libro * libromain;
+    char id[101];
+    TreeMap* mapadelibros=createTreeMap(stringEqual);
     eleccionFunciones(&funcion);
     while (funcion != 0)//ciclo repetitivo que permite seleccionar la funcion que quiere utilizar y con un 0 salir de estas 
     {
@@ -180,14 +205,9 @@ int main()
             fgets(idtexto,100,stdin);
             char* token=strtok(idtexto,"\n");
             char* aux=token;
-   
-            while(token!=0)
-            {  
-                procesarArchivo(token);
-                fgets(idtexto,100,stdin);
-                getchar();
-                token=strtok(idtexto,"\n");
-            }
+            libromain=procesarArchivo(token);
+            insertTreeMap(mapadelibros,libromain->id,libromain);
+            
             break;
 
             case 2:
@@ -199,7 +219,11 @@ int main()
             break;
 
             case 4:
-            //mostrarFrecuencia(libros)
+            
+            printf("ingrese la id del libro para ver su frecuencia\n");
+            getchar();
+            fgets(id,100,stdin);
+            mostrarFrecuencia(mapadelibros,id);
             break;
 
             case 5:
