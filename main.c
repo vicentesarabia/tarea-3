@@ -16,6 +16,7 @@ typedef struct
 {
     List* titulo;
     char* id;
+    char* idtxt;
     Palabras frecuencia[10];
     long cantidaPala;
     long caracteres;
@@ -83,21 +84,23 @@ List* obtenertitulo(FILE* f)
             while(token!=NULL){
             
                 
-                printf("a");
+                
                 pushBack(listaux,token);
                 token=strtok(NULL," ");
                 if(token==aux2)break;
-                printf("a");
+                
                 
 
 
             }
+            popFront(listaux);
             return listaux;
         }
 
     }
     return NULL;
 }
+
 libro * procesarArchivo(char* token)
 {
     libro * librosPro=(libro*)malloc(sizeof(libro));
@@ -160,26 +163,17 @@ libro * procesarArchivo(char* token)
     fseek(f,0,SEEK_END);
 
     librosPro->caracteres=ftell(f);
-    printf("%ld\n",librosPro->caracteres);
-    printf("%ld\n",librosPro->cantidaPala);
     fseek(f,0,SEEK_SET);
     librosPro->titulo=obtenertitulo(f);
-    char* auxtitle=firstList(librosPro->titulo);
-    while(auxtitle!=NULL)
-    {
-           
-        printf("%s ",auxtitle);
-        auxtitle=nextList(librosPro->titulo);
-    }
-    printf("\n");
-    for(int i=0;i<10;i++)
-    {
-        printf("%.4f , %s\n",librosPro->frecuencia[i].cont, librosPro->frecuencia[i].word);
-
-    }
+    librosPro->idtxt=strdup(token);
     token=quitar_caracteres(token,".txt");
     librosPro->id=strdup(token);
-    printf("%s\n",librosPro->id);
+    char* auxtitlea=firstList(librosPro->titulo);
+        while(auxtitlea!=NULL)
+        {
+            printf("%s ",auxtitlea);
+            auxtitlea=nextList(librosPro->titulo);
+        }
     return librosPro;
     
 }
@@ -198,6 +192,68 @@ void mostrarFrecuencia(TreeMap *mapa , char id[])
         printf("%.4f , %s\n",libroaux->frecuencia[i].cont, libroaux->frecuencia[i].word);
 
     }
+
+}
+void mostrarDoc(TreeMap* mapa)
+{
+    Pair* pairaux=firstTreeMap(mapa);
+    libro* libroaux;
+
+    while(pairaux!=NULL)
+    {
+        libroaux=pairaux->value;
+        printf("titulo: ");
+        char* aux=firstList(libroaux->titulo);
+        while(aux!=NULL)
+        {
+            printf("%s ",aux);//no entendemos pq se printea mal pq en el procesar archivo si se muestra bien
+            aux=nextList(libroaux->titulo);
+        }
+        printf("\n");
+        printf("id: %s\n",libroaux->id);
+        printf("cantidad de palabras: %ld\n",libroaux->cantidaPala);
+        printf("cantidad de caracteres: %ld\n",libroaux->caracteres);
+        printf("a");
+        pairaux=nextTreeMap(mapa);
+        printf("2a");
+
+
+    }
+}
+void mostrarContex(TreeMap*libros,char* busq){
+    char titulo[1024];
+    char* aux;
+    char* token;
+    printf("ingrese el titulo del libro");
+    getchar();
+    fgets(titulo,1023,stdin);
+    Pair* auxpair=searchTreeMap(libros,titulo);
+    libro* libroaux=auxpair->value;
+    aux=strdup(libroaux->idtxt);
+    FILE* entrada;
+    entrada=fopen(aux,"rt");
+    while(fgets(aux,1023,entrada)!=NULL)
+    {
+        
+        token=strtok(aux," ");
+        while(token!=NULL)
+        {
+            if(strcmp(token,busq)==0)
+            {
+                printf("%s\n",aux);
+
+            }
+            token=strtok(NULL," ");
+        }
+        
+
+    }
+
+
+
+
+
+
 
 }
 void eleccionFunciones(int *funcion)
@@ -222,6 +278,7 @@ int main()
     libro * libromain;
     char id[101];
     TreeMap* mapadelibros=createTreeMap(stringEqual);
+    TreeMap* iddelibros=createTreeMap(stringEqual);
     eleccionFunciones(&funcion);
     while (funcion != 0)//ciclo repetitivo que permite seleccionar la funcion que quiere utilizar y con un 0 salir de estas 
     {
@@ -235,13 +292,17 @@ int main()
             fgets(idtexto,100,stdin);
             char* token=strtok(idtexto,"\n");
             char* aux=token;
+            
             libromain=procesarArchivo(token);
-            insertTreeMap(mapadelibros,libromain->id,libromain);
+            insertTreeMap(iddelibros,libromain->id,libromain);
+            //insertTreeMap(mapadelibros,libromain->titulo,libromain);
+        
+            
             
             break;
 
             case 2:
-            //mostrarDoc(libros)
+            mostrarDoc(iddelibros);
             break;
             
             case 3:
@@ -253,7 +314,7 @@ int main()
             printf("ingrese la id del libro para ver su frecuencia\n");
             getchar();
             fgets(id,100,stdin);
-            mostrarFrecuencia(mapadelibros,id);
+            mostrarFrecuencia(iddelibros,id);
             break;
 
             case 5:
@@ -265,7 +326,10 @@ int main()
             break;
 
             case 7:
-            //mostrarContex(libros)
+            printf("ingrese la palabra a buscar en su contexto\n");
+            getchar();
+            fgets(id,100,stdin);
+            mostrarContex(iddelibros,id);
             break;
 
             default:
