@@ -69,25 +69,47 @@ int is_equal_string(void * key1, void * key2)
     if(strcmp((char*)key1, (char*)key2)==0) return 1;
     return 0;
 }
+List* obtenertitulo(FILE* f)
+{
+    char aux[1024];
+    char* token,*aux2;
+    List* listaux=createList();
+    while(fgets(aux,1023,f)!=NULL)
+    {
+        token=strtok(aux," ");
+        if(strcmp(token,"Title:")==0)
+        {
+            aux2=token;
+            while(token!=NULL){
+            
+                
+                printf("a");
+                pushBack(listaux,token);
+                token=strtok(NULL," ");
+                if(token==aux2)break;
+                printf("a");
+                
 
+
+            }
+            return listaux;
+        }
+
+    }
+    return NULL;
+}
 libro * procesarArchivo(char* token)
 {
     libro * librosPro=(libro*)malloc(sizeof(libro));
     librosPro->cantidaPala=0;
     Map * mapa = createMap(stringEqual);
     FILE *f;
-    long auxtitle;
     f=fopen(token,"rt");
     char* word=next_word(f);
     for (int i = 0; word[i]; i++) word[i] = tolower(word[i]);
     word = quitar_caracteres(word, ".,:_[]()!?\";");
     //Palabras * pal = (Palabras *) malloc (sizeof(Palabras));
     while(word){
-        if(strcmp(word,"title")==0)
-        {
-            auxtitle=ftell(f);
-
-        }
 
         Palabras * search = searchMap(mapa, word);
         if (search == NULL)
@@ -136,12 +158,20 @@ libro * procesarArchivo(char* token)
     }
     librosPro->palabras=mapa;
     fseek(f,0,SEEK_END);
+
     librosPro->caracteres=ftell(f);
     printf("%ld\n",librosPro->caracteres);
     printf("%ld\n",librosPro->cantidaPala);
-    fseek(f,auxtitle,SEEK_CUR);
-    fgets(word,1023,f);
-    printf("%ld\n",auxtitle);
+    fseek(f,0,SEEK_SET);
+    librosPro->titulo=obtenertitulo(f);
+    char* auxtitle=firstList(librosPro->titulo);
+    while(auxtitle!=NULL)
+    {
+           
+        printf("%s ",auxtitle);
+        auxtitle=nextList(librosPro->titulo);
+    }
+    printf("\n");
     for(int i=0;i<10;i++)
     {
         printf("%.4f , %s\n",librosPro->frecuencia[i].cont, librosPro->frecuencia[i].word);
